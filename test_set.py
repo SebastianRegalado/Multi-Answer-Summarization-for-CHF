@@ -54,15 +54,33 @@ def copy_labels(src_path: str, dest_path: str):
             continue
         dest_df.loc[mask, labels_to_copy] = row[labels_to_copy].values
     dest_df.to_csv(dest_path, index=False)
+
+def aggregate_files(file_paths: T.List[str], output_path: str):
+    dfs = []
+    for file_path in file_paths:
+        df = pd.read_csv(file_path)
+        dfs.append(df)
+    df = pd.concat(dfs)
+
+    # remove duplicates
+    df = df.drop_duplicates(subset=["subject", "content", "sentence", "answer"])
+    df.to_csv(output_path, index=False)
     
 if __name__ == "__main__":
-    DATA_DIR = Path(os.getenv("CSC2541_DIR")) / "data"
-    TEST_SIZE = 2000
-    file_path = DATA_DIR / "yahoo_health.json"
-    output_path = DATA_DIR / "yahoo_health_test.csv"
-    choose_test_set(file_path, output_path, TEST_SIZE)
+    DATA_DIR = Path(os.getenv("CSC2541_DIR", ".")) / "data"
+    # TEST_SIZE = 2000
+    # file_path = DATA_DIR / "yahoo_health.json"
+    # output_path = DATA_DIR / "yahoo_health_test.csv"
+    # choose_test_set(file_path, output_path, TEST_SIZE)
 
-    src_path = DATA_DIR / "Perspective Labeled.csv"
-    dest_path = DATA_DIR / "yahoo_health_test.csv"
-    copy_labels(src_path, dest_path)
+    # src_path = DATA_DIR / "Perspective Labeled.csv"
+    # dest_path = DATA_DIR / "yahoo_health_test.csv"
+    # copy_labels(src_path, dest_path)
+
+    file_paths = [
+        DATA_DIR / "yahoo_health_labeled_10_27.csv",
+        DATA_DIR / "yahoo_health_labeled_11_02.csv",
+    ]
+    output_path = DATA_DIR / "yahoo_health_labeled_11_02_combined.csv"
+    aggregate_files(file_paths, output_path)
 
