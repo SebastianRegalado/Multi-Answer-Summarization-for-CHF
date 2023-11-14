@@ -37,7 +37,7 @@ def show_question():
         annotated_text(*answer)
 
     st.session_state.counter += 1
-    if st.session_state.counter >= len(questions):
+    if st.session_state.counter >= len(data):
         st.session_state.counter = 0
 
 button = st.button("Next question", on_click=show_question)
