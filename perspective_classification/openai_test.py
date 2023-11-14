@@ -94,13 +94,13 @@ MODEL = "gpt-3.5-turbo"
 BEST_MODEL = "ft:gpt-3.5-turbo-0613:personal::8JEyByZO"
 
 class ConversationGenerator:
-    def __init__(self, config_file: str) -> None:
+    def __init__(self, config_file: str, model: str) -> None:
         config = yaml.safe_load(open(config_file))
         self.name = config["name"]
         self.system_message = config["system_message"]
         self.user_message_template = Template(config["user_message_template"])
         self.perspective_map = config["perspective_map"]
-        self.model = MODEL
+        self.model = model
 
     def chat_with_gpt(self, messages):
         retries = 0
@@ -180,6 +180,6 @@ def evaluate_labels(input_file: str, cg: ConversationGenerator, map_labels=True)
 if __name__ == "__main__":
     input_file = DATA_DIR / FILENAME
     output_file = DATA_DIR / FILENAME.replace(".csv", "_classified.csv")
-    generator = ConversationGenerator(CONFIG_FILE)
+    generator = ConversationGenerator(CONFIG_FILE, MODEL)
     # generator.classify_answers(input_file, output_file)
     evaluate_labels(output_file, generator, map_labels=False)
