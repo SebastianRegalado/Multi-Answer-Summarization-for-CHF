@@ -1,10 +1,11 @@
 import json
+import random
 import pandas as pd
 from tqdm import tqdm
 from pathlib import Path
 from utils import DATA_DIR
 # from nli_medical_questions import HYPOTHESES_MAP, create_sentence
-from preprocessing import load_dataset, split_answer
+from preprocessing import split_answer
 
 HYPOTHESES_MAP = None
 create_sentence = None
@@ -71,14 +72,16 @@ def is_valid_answer(answer: str):
         return False
     return True
 
-def check_correspondence(json_file: Path, csv_file: Path):
-    with open(json_file, encoding="utf-8") as f:
+def save_medical(data_file: Path, medical_file: Path, output_file: Path):
+    with open(data_file, encoding="utf-8") as f:
         data = json.load(f)
-    df = pd.read_csv(csv_file)
+    df = pd.read_csv(medical_file)
     df.sort_values(by="pos", inplace=True)
     
+    medical_labels = ["medical", "medically_related", "medical_related", "health", "health_related"]
+    df["all_medical"] = df.apply(lambda row: all(row[label] for label in medical_labels), axis=1)
     medical_data = []
-    for row, label in zip(data, df["medical"]):
+    for row, label in zip(data, df["all_medical"]):
         if label:
             medical_data.append(row)
 
@@ -94,31 +97,31 @@ def check_correspondence(json_file: Path, csv_file: Path):
     
     print(f"Total medical short: {len(medical_short)}")
 
-    new_data = []
+    medical_valid = []
     for row in medical_short:
         if row["nbestanswers"] is None:
             continue
-        num_valid_answers = sum([is_valid_answer(a) for a in row["nbestanswers"]])
+        valid_answers = [a for a in row["nbestanswers"] if is_valid_answer(a)]
+        row["nbestanswers"] = valid_answers
+        num_valid_answers = len(valid_answers)
         if num_valid_answers < 4 or num_valid_answers > 6:
             continue
-        new_data.append(row)
+        medical_valid.append(row)
         
-    print(f"Total medical short valid: {len(new_data)}")
+    print(f"Total medical short valid: {len(medical_valid)}")
 
-    non_mental_health = []
-    for row in new_data:
-        if row["cat"] == "Mental Health":
-            continue
-        non_mental_health.append(row)
-
+    non_mental_health = [row for row in medical_valid if row["cat"] != "Mental Health"]
     print(f"Total non mental health: {len(non_mental_health)}")
 
-    import random
-    random_10k = random.sample(non_mental_health, 5000)
-    num_sentences = 0
-    for row in tqdm(random_10k):
-        num_sentences += sum([len(split_answer(a)) for a in row["nbestanswers"]])
-    print(f"Total sentences: {num_sentences}")
+    for row in non_mental_health:
+        answers = row["nbestanswers"]
+        row["answers"] = [split_answer(a) for a in answers]
+
+    random.seed(4567)
+    final_data = random.sample(non_mental_health, 1000)
+    with open(output_file, "w") as f:
+        json.dump(final_data, f, indent=2)
+    
 
 def copy_medical_labels(medical_file: Path, target_file: Path, output_file: Path):
     df = pd.read_csv(medical_file)
@@ -148,10 +151,7 @@ def copy_medical_labels(medical_file: Path, target_file: Path, output_file: Path
 if __name__ == "__main__":
     file_path = DATA_DIR / "yahoo_health_medical_labels.csv"
     json_file = DATA_DIR / "yahoo_health.json"
-    check_correspondence(json_file, file_path)
-    # data = load_dataset(json_file)
-    # print(len(data))
+    output_file = DATA_DIR / "yahoo_health_medical_short.json"
+    save_medical(json_file, file_path, output_file)
 
-    # copy_medical_labels(file_path, DATA_DIR / "yahoo_health_labeled_11_02_combined.csv", DATA_DIR / "yahoo_health_labeled_11_07.csv")
-    
     
