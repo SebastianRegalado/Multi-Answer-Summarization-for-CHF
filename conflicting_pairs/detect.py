@@ -48,7 +48,16 @@ for q in tqdm(data):
             label = labels[np.argmax(score)]
             if label == "contradiction":
                 num_conflicting_pairs += 1
-                q["cause_contradiction_pairs"].append((cause1, cause2, answer_idx1, cause_idx1, answer_idx2, cause_idx2))
+                pair = {
+                    "cause1": cause1,
+                    "cause2": cause2,
+                    "answer_idx1": answer_idx1,
+                    "cause_idx1": cause_idx1,
+                    "answer_idx2": answer_idx2,
+                    "cause_idx2": cause_idx2,
+                    "score": score.tolist()
+                }
+                q["cause_contradiction_pairs"].append(pair)
 
 with open(output_file, "w") as f:
     json.dump(data, f, indent=2)
