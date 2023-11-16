@@ -55,7 +55,6 @@ for q in tqdm(data):
                     "cause_idx1": cause_idx1,
                     "answer_idx2": answer_idx2,
                     "cause_idx2": cause_idx2,
-                    "score": score.tolist()
                 }
                 q["cause_contradiction_pairs"].append(pair)
 
