@@ -44,8 +44,8 @@ def count_words(text):
     
 from transformers import BartTokenizer, BartForConditionalGeneration
 
-#tokenizer = BartTokenizer.from_pretrained('facebook/bart-large-cnn')
-#model = BartForConditionalGeneration.from_pretrained('facebook/bart-large-cnn')
+tokenizer_Bart = BartTokenizer.from_pretrained('facebook/bart-large-cnn')
+model_Bart = BartForConditionalGeneration.from_pretrained('facebook/bart-large-cnn')
 
 
 def Bart(input_text, tokenizer, model, print_summuary=0, rate=0.33):
@@ -54,7 +54,7 @@ def Bart(input_text, tokenizer, model, print_summuary=0, rate=0.33):
   inputs = tokenizer(input_text, return_tensors="pt")
 
   # Generate the summary
-  summary_ids = model.generate(**inputs, max_length=count_words(input_text), 
+  summary_ids = model.generate(**inputs, max_length=int(count_words(input_text)+20), 
                                min_length=int(rate*count_words(input_text)), 
                                length_penalty=2, num_beams=4, early_stopping=True)
   summary = tokenizer.decode(summary_ids[0], skip_special_tokens=True)
@@ -75,8 +75,8 @@ import sentencepiece
 from transformers import T5Tokenizer, T5ForConditionalGeneration
 
 # Load pre-trained T5 tokenizer and model
-#tokenizer = T5Tokenizer.from_pretrained('t5-base')
-#model = T5ForConditionalGeneration.from_pretrained('t5-base')
+tokenizer_T5 = T5Tokenizer.from_pretrained('t5-base')
+model_T5 = T5ForConditionalGeneration.from_pretrained('t5-base')
 
 
 def T5(input_text, tokenizer, model, print_summuary=0, rate=0.33):
@@ -85,7 +85,7 @@ def T5(input_text, tokenizer, model, print_summuary=0, rate=0.33):
   inputs = tokenizer("summarize: " + input_text, return_tensors="pt", max_length=512, truncation=True)
 
   # Generate the summary
-  summary_ids = model.generate(**inputs, max_length=count_words(input_text), 
+  summary_ids = model.generate(**inputs, max_length=int(count_words(input_text)+20), 
                                min_length=int(rate*count_words(input_text)), 
                                length_penalty=0, num_beams=4, early_stopping=True)
   summary = tokenizer.decode(summary_ids[0], skip_special_tokens=True)
@@ -100,23 +100,48 @@ def T5(input_text, tokenizer, model, print_summuary=0, rate=0.33):
   return summary
 
 
-def produce_summary(data, n=5, method="Bart"):
+
+
+
+
+def produce_summary(data, n=5, method="Bart", rate=0.33, print_summary=0):
     if method == "Bart":
-        tokenizer = BartTokenizer.from_pretrained('facebook/bart-large-cnn')
-        model = BartForConditionalGeneration.from_pretrained('facebook/bart-large-cnn')
+        tokenizer = tokenizer_Bart
+        model = model_Bart
     if method == "T5":
-        tokenizer = T5Tokenizer.from_pretrained('t5-base')
-        model = T5ForConditionalGeneration.from_pretrained('t5-base')
+        tokenizer = tokenizer_T5
+        model = model_T5
+    output = []
     for i in range(n):
+        print(f"{i+1}/{n}")
+        summary_input_dict = {}
+        summary_dict = {}
         question, content, grouped_data = get_category(data[i])
-        print(f"Question {i}: {question}")
-        print("Answer:")
+        if print_summary:
+            print(f"Question {i}: {question}\n")
+            print("Answer:")
         for category, text in grouped_data.items():
-            print(f"[{category}]")
+            if print_summary:
+                print(f"\n[{category}]")
             if method == "Bart":
-                summary = Bart(text, tokenizer, model, 1)
+                summary = Bart(text, tokenizer, model, print_summary, rate)
             elif method == "T5":
-                summary = T5(text, tokenizer, model, 1)
+                summary = T5(text, tokenizer, model, print_summary, rate)
+            summary_input_dict[category] = text
+            summary_dict[category] = summary
+        out = data[i].copy()
+        out['summary_input'] = summary_input_dict
+        out['summary'] =  summary_dict
+        output.append(out)
+    return output
             
-produce_summary(data) 
+output = produce_summary(data, n=100) 
+
+output_T5 = produce_summary(data, n=100, method = "T5") 
+
+#produce_summary([data[37]], n=1, print_summary=1) 
+
+# Save as JSON
+with open('classified_summary_T5_100.json', 'w') as json_file:
+    json.dump(output, json_file, indent=2)
                
