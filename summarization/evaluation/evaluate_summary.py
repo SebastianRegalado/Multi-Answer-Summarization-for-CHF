@@ -3,11 +3,11 @@ import sys
 sys.path.append('../')
 import numpy as np
 from tqdm import tqdm
-import os
+import torch
 
 import argparse
 from ref_free_metrics.supert import Supert
-from utils.data_reader import CorpusReader
+from nltk.tokenize import sent_tokenize
 from utils.evaluator import evaluate_summary_rouge, add_result
 
 
@@ -19,41 +19,44 @@ if __name__ == '__main__':
     )
 
     parser.add_argument('input_path', type=str, help='path to the input file')
-    parser.add_argument('output_path', type=str, help='path to the output file')
     args = parser.parse_args()
+
+    output_path = args.input_path.replace('.json', '_scores.json')
     
     # pseudo-ref strategy: 
     # * top15 means the first 15 sentences from each input doc will be used to build the pseudo reference summary
     pseudo_ref = 'top15' 
 
-    reader = CorpusReader("data/topic_3")
-    source_docs = reader.readSimpleDocs()
-    summaries = reader.readSummaries()
-
     # read source documents
     with open(args.input_path, 'r') as f:
         data = json.load(f)
 
-    source_docs_list = []
-    summaries_list = []
-    for d in data:
-        source_docs = [(str(i+1), source_doc) for i, source_doc in enumerate(d['source_docs'])]
-        source_docs_list.append(source_docs)
-        summaries_list.append([d['summary']])
-
     # get unsupervised metrics for the summaries
-    pbar = tqdm(total=len(data))
-    for d, source_docs, summaries in zip(data, source_docs_list, summaries_list):
-        supert = Supert(source_docs, ref_metric=pseudo_ref) 
-        scores = supert(summaries)
-        d["score"] = scores[0]
-        pbar.update(1)
-
-    pbar.close()
+    for d in tqdm(data):
+        d["summary_score"] = {}
+        for label in d["summary"]:
+            input = d["summary_input"][label]
+            sentences = sent_tokenize(input)
+            summaries = [d["summary"][label]]
+            source_docs = [(d['uri'], sentences)]
+            supert = Supert(source_docs, ref_metric=pseudo_ref) 
+            scores = supert(summaries)
+            d["summary_score"][label] = scores[0]
 
     # write the scores to the output file
-    with open(args.output_path, 'w') as f:
+    with open(output_path, 'w') as f:
         json.dump(data, f, indent=2)
+
+    with open(output_path, 'r') as f:
+        data = json.load(f)
+
+    for label in ["information", "suggestion", "cause", "treatment", "experience"]:
+        all_scores = [d["summary_score"][label] for d in data if label in d["summary"]]
+        mean_score = np.mean(all_scores)
+        std_score = np.std(all_scores)
+        print(f"Label: {label}")
+        print(f"Mean score: {mean_score:.4f} +/- {std_score:.4f}")
+        print()
 
     # (Optional) compare the summaries against golden refs using ROUGE
     # if os.path.isdir('./rouge/ROUGE-RELEASE-1.5.5') and args.rouge:
