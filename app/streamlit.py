@@ -4,7 +4,7 @@ from pathlib import Path
 from annotated_text import annotated_text
 from utils import DATA_DIR, merge_sentences
  
-DATA_DIR = Path("report_data")
+DATA_DIR = Path("C:/Users/gayat/Documents/Uoft/SEM1/ML-healthcare/project/yahoo_health/report_data")
 
 with open(DATA_DIR / "yahoo_health_medical_short_classified_contradiction.json", encoding="utf-8") as f:
     questions_data = json.load(f)
@@ -19,11 +19,11 @@ if 'display' not in st.session_state:
     st.session_state.display = "answers"
 
 label2color = {
-    "cause": "#ff0000",
-    "suggestion": "#3d85c6",
-    "experience": "#8e7cc3",
-    "treatment": "#bf9000",
-    "information": "#8fce00"
+    "cause": "#FF9A8A",
+    "suggestion": "#AED9E0",
+    "experience": "#C3AED6",
+    "treatment": "#FFF5BA",
+    "information": "#BFD8AC"
 }
 
 st.markdown("""
@@ -38,6 +38,7 @@ st.markdown("""
             </style>
             """, unsafe_allow_html=True)
 
+          
 def convert_answer(answer):
     return [(sentence, label, label2color.get(label, "#000000")) for sentence, label in answer]
 
@@ -56,7 +57,8 @@ def show_question():
     question = questions_data[index]
     subject = question["subject"]
     content = question["content"]
-    display_heading("Subject", subject)
+    #display_heading("Subject", subject)
+    st.markdown(f"<h3><b>Subject</b>: {subject}</h3>", unsafe_allow_html=True)
     display_heading("Content", content)
     st.divider()
     if st.session_state.display == "answers":
