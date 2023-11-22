@@ -4,7 +4,7 @@ from pathlib import Path
 from annotated_text import annotated_text
 from utils import DATA_DIR, merge_sentences
  
-DATA_DIR = Path("C:/Users/gayat/Documents/Uoft/SEM1/ML-healthcare/project/yahoo_health/report_data")
+DATA_DIR = Path("report_data")
 
 with open(DATA_DIR / "yahoo_health_medical_short_classified_contradiction.json", encoding="utf-8") as f:
     questions_data = json.load(f)
@@ -12,8 +12,14 @@ with open(DATA_DIR / "yahoo_health_medical_short_classified_contradiction.json",
 with open(DATA_DIR / "classified_summary_Bart100.json", encoding="utf-8") as f:
     summaries_data = json.load(f)
 
-if 'counter' not in st.session_state: 
+starting_subject = "A week after my tooth was pulled...?"
+
+if 'counter' not in st.session_state:
     st.session_state.counter = 0
+    for i, question in enumerate(questions_data):
+        if question["subject"] == starting_subject:
+            st.session_state.counter = i
+            break
 
 if 'display' not in st.session_state:
     st.session_state.display = "answers"
@@ -126,6 +132,6 @@ col1, col2, col3, col4, col5 = st.columns([1,1,1,1,1])
 col1.button("Answers", on_click=lambda: update_display("answers"))
 col2.button("Summaries", on_click=lambda: update_display("summaries"))
 col3.button("Conflicting pairs", on_click=lambda: update_display("conflicting_pairs"))
-col4.button("Prev question", on_click=show_prev_question)
-col5.button("Next question", on_click=show_next_question)
+# col4.button("Prev question", on_click=show_prev_question)
+# col5.button("Next question", on_click=show_next_question)
 show_question()
