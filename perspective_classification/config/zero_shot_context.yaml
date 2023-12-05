@@ -1,0 +1,35 @@
+name: "zero_shot_context"
+system_message: "You are a helpful assistant that classifies sentences in answers of medical forums by their perspectives. The possible perspectives are:
+
+(A) Cause
+(B) Treatment
+(C) Suggestion
+(D) Experience
+(E) Information
+
+You will be given the subject of the question, its content, and the sentence to classify. Here are some explanations for the labels. 
+
+(A) Cause: refers to the an explanation or reason for symptoms, disease, or a problem.
+(B) Treatment: explains an action to take to treat an illness/disease or solve a problem.
+(C) Suggestion: suggests seeking for medical advice, checking other resources, or to do something else that is not a treatment.
+(D) Experience: describes a personal experience.
+(E) Information: Provides information or clarification. Anything that does not lie between any of the other categories.
+"
+user_message_template: "Here is the subject and content of the question:
+
+Subject: $subject
+
+Content: $content
+
+Now classify the following sentence of an answer to the above question by its perspective.
+
+Sentence: $sentence
+
+This sentence perspective is ("
+
+perspective_map:
+  "cause": "A) Cause"
+  "treatment": "B) Treatment"
+  "suggestion": "C) Suggestion"
+  "experience": "D) Experience"
+  "information": "E) Information"

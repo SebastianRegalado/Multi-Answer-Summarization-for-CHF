@@ -3,12 +3,10 @@ import sys
 sys.path.append('../')
 import numpy as np
 from tqdm import tqdm
-import torch
 
 import argparse
 from ref_free_metrics.supert import Supert
 from nltk.tokenize import sent_tokenize
-from utils.evaluator import evaluate_summary_rouge, add_result
 
 
 if __name__ == '__main__':
@@ -57,21 +55,3 @@ if __name__ == '__main__':
         print(f"Label: {label}")
         print(f"Mean score: {mean_score:.4f} +/- {std_score:.4f}")
         print()
-
-    # (Optional) compare the summaries against golden refs using ROUGE
-    # if os.path.isdir('./rouge/ROUGE-RELEASE-1.5.5') and args.rouge:
-    #     refs = reader.readReferences() # make sure you have put the references in data/topic_1/references
-    #     summ_rouge_scores = []
-    #     for summ in summaries:
-    #         rouge_scores = {}
-    #         for ref in refs:
-    #             rs = evaluate_summary_rouge(summ, ref)
-    #             add_result(rouge_scores, rs)
-    #         summ_rouge_scores.append(rouge_scores)
-
-    #     for mm in ['ROUGE-1', 'ROUGE-2','ROUGE-L','ROUGE-SU4']:
-    #         rouge_scores = []
-    #         for rs in summ_rouge_scores:
-    #             rouge_scores.append( np.mean(rs[mm]) )
-    #         print('reference-based',mm,'\n',rouge_scores)
-
